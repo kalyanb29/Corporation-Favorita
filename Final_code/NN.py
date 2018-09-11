@@ -1,7 +1,3 @@
-"""
-This is an upgraded version of Ceshine's and Linzhi and Andy Harless starter script, simply adding more
-average features and weekly average features on it.
-"""
 from datetime import date, timedelta
 import pandas as pd
 import numpy as np
@@ -19,7 +15,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 import gc
 
 df_train = pd.read_csv(
-    '../input/train.csv', usecols=[1, 2, 3, 4, 5],
+    '../Data/train.csv', usecols=[1, 2, 3, 4, 5],
     dtype={'onpromotion': bool},
     converters={'unit_sales': lambda u: np.log1p(
         float(u)) if float(u) > 0 else 0},
@@ -28,7 +24,7 @@ df_train = pd.read_csv(
 )
 
 df_test = pd.read_csv(
-    "../input/test.csv", usecols=[0, 1, 2, 3, 4],
+    "../Data/test.csv", usecols=[0, 1, 2, 3, 4],
     dtype={'onpromotion': bool},
     parse_dates=["date"]  # , date_parser=parser
 ).set_index(
@@ -36,11 +32,11 @@ df_test = pd.read_csv(
 )
 
 items = pd.read_csv(
-    "../input/items.csv",
+    "../Data/items.csv",
 ).set_index("item_nbr")
 
 stores = pd.read_csv(
-    "../input/stores.csv",
+    "../Data/stores.csv",
 ).set_index("store_nbr")
 
 le = LabelEncoder()
@@ -221,16 +217,17 @@ def build_model():
     model = Sequential()
     model.add(LSTM(512, input_shape=(X_train.shape[1],X_train.shape[2])))
     model.add(BatchNormalization())
+    model.add(ReLU())
     model.add(Dropout(.2))
 
     model.add(Dense(256))
-    model.add(PReLU())
     model.add(BatchNormalization())
+    model.add(PReLU())
     model.add(Dropout(.1))
 
     model.add(Dense(256))
-    model.add(PReLU())
     model.add(BatchNormalization())
+    model.add(PReLU())
     model.add(Dropout(.1))
 
     model.add(Dense(128))
@@ -239,8 +236,8 @@ def build_model():
     model.add(Dropout(.05))
 
     model.add(Dense(64))
-    model.add(PReLU())
     model.add(BatchNormalization())
+    model.add(PReLU())
     model.add(Dropout(.05))
 
     model.add(Dense(32))
@@ -249,8 +246,8 @@ def build_model():
     model.add(Dropout(.05))
 
     model.add(Dense(16))
-    model.add(PReLU())
     model.add(BatchNormalization())
+    model.add(PReLU())
     model.add(Dropout(.05))
 
     model.add(Dense(1))
@@ -279,7 +276,7 @@ for i in range(16):
         EarlyStopping(monitor='val_loss', patience=10, verbose=0),
         ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=7, verbose=1, epsilon=1e-4, mode='min')
         ]
-    model.fit(X_train, y - y_mean, batch_size = 65536, epochs = N_EPOCHS, verbose=2,
+    model.fit(X_train, y - y_mean, batch_size = 512, epochs = N_EPOCHS, verbose=2,
                sample_weight=sample_weights, validation_data=(xv,yv-y_mean), callbacks=callbacks )
     val_pred.append(model.predict(X_val)+y_mean)
     test_pred.append(model.predict(X_test)+y_mean)
@@ -309,4 +306,4 @@ df_preds.index.set_names(["store_nbr", "item_nbr", "date"], inplace=True)
 
 submission = df_test[["id"]].join(df_preds, how="left").fillna(0)
 submission["unit_sales"] = np.clip(np.expm1(submission["unit_sales"]), 0, 1000)
-submission.to_csv('nn_sub.csv', float_format='%.4f', index=None)
+submission.to_csv('LSTM.csv', float_format='%.4f', index=None)

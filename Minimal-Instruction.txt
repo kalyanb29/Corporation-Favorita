@@ -1,0 +1,10 @@
+Instructions:
+
+1. Download and extract the data in .csv format in \Data folder.
+2. Install LightGBM, Keras, Python.
+2. Download Pycharm 
+3. Open the project in Pycharm.
+4. Run LGB for using decision tree based approaches and NN for a simple 
+   neural network based approach.
+
+

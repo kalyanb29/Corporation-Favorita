@@ -217,7 +217,7 @@ params = {
     'num_leaves': 80,
     'objective': 'regression',
     'min_data_in_leaf': 200,
-    'learning_rate': 0.02,
+    'learning_rate': 0.01,
     'feature_fraction': 0.8,
     'bagging_fraction': 0.7,
     'bagging_freq': 1,
@@ -283,4 +283,4 @@ df_preds.index.set_names(["store_nbr", "item_nbr", "date"], inplace=True)
 
 submission = df_test[["id"]].join(df_preds, how="left").fillna(0)
 submission["unit_sales"] = np.clip(np.expm1(submission["unit_sales"]), 0, 1000)
-submission.to_csv('lgb_sub.csv', float_format='%.4f', index=None)
+submission.to_csv('LGB.csv', float_format='%.4f', index=None)
